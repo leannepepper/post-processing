@@ -1,116 +1,59 @@
 "use client";
-import { use, useEffect } from "react";
-import styles from "./page.module.css";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-const size = {
-  width: 0,
-  height: 0,
-};
+const Home = () => {
+  const mountRef = useRef<HTMLDivElement>(null);
 
-export default function Home() {
   useEffect(() => {
-    size.width = window.innerWidth;
-    size.height = window.innerHeight;
+    if (!mountRef.current) return;
 
+    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
-      size.width / size.height,
+      window.innerWidth / window.innerHeight,
       0.1,
       1000
     );
-    const renderer = new THREE.WebGLRenderer({
-      canvas: document.querySelector("canvas")!,
-    });
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    mountRef.current.appendChild(renderer.domElement); // Mounting the renderer to the div
 
-    renderer.setSize(size.width, size.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Red cube
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
 
     camera.position.z = 5;
-    scene.add(camera);
 
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-
-    scene.add(cube);
-    renderer.render(scene, camera);
-
-    function animate() {
-      renderer.render(scene, camera);
+    const animate = () => {
+      requestAnimationFrame(animate);
 
       cube.rotation.x += 0.01;
       cube.rotation.y += 0.01;
 
-      requestAnimationFrame(animate);
-    }
+      renderer.render(scene, camera);
+    };
+
+    // Handle window resize
+    const onWindowResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", onWindowResize, false);
 
     animate();
-    window.addEventListener("resize", () => onWindowResize(camera, renderer));
 
     return () => {
-      window.removeEventListener("resize", () =>
-        onWindowResize(camera, renderer)
-      );
+      window.removeEventListener("resize", onWindowResize, false);
+      mountRef.current?.removeChild(renderer.domElement);
     };
   }, []);
 
-  return (
-    <main className={styles.main}>
-      <canvas className={styles.webgl}></canvas>
-    </main>
-  );
-}
+  return <div ref={mountRef} style={{ width: "100vw", height: "100vh" }} />;
+};
 
-function initScene(
-  camera: THREE.PerspectiveCamera,
-  scene: THREE.Scene,
-  renderer: THREE.WebGLRenderer
-) {
-  renderer.setSize(size.width, size.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  camera.position.z = 5;
-  scene.add(camera);
-
-  const geometry = new THREE.BoxGeometry();
-  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-  const cube = new THREE.Mesh(geometry, material);
-
-  scene.add(cube);
-  renderer.render(scene, camera);
-
-  function animate() {
-    renderer.render(scene, camera);
-
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-
-    requestAnimationFrame(animate);
-  }
-
-  animate();
-}
-
-function onWindowResize(
-  camera: THREE.PerspectiveCamera,
-  renderer: THREE.WebGLRenderer
-) {
-  console.log("Resizing window");
-
-  // Update sizes
-  size.width = window.innerWidth;
-  size.height = window.innerHeight;
-
-  console.log(`New size: ${size.width} x ${size.height}`);
-
-  // Update camera
-  camera.aspect = size.width / size.height;
-  console.log(`New camera aspect: ${camera.aspect}`);
-  camera.updateProjectionMatrix();
-
-  // Update renderer
-  renderer.setSize(size.width, size.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-}
+export default Home;
