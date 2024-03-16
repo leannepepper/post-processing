@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { OutlinePass } from "./postprocessing/ErosionPass.js";
+import { ErosionPass } from "./postprocessing/ErosionPass.ts";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const Home = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -23,7 +24,7 @@ const Home = () => {
     mountRef.current.appendChild(renderer.domElement);
 
     const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
     const cube = new THREE.Mesh(geometry, material);
     scene.add(cube);
 
@@ -34,18 +35,13 @@ const Home = () => {
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
 
-    // Outline pass
-    const outlinePass = new OutlinePass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
-      scene,
-      camera,
-      [cube]
-    );
-    outlinePass.edgeStrength = 3;
-    outlinePass.edgeThickness = 2.0;
-    outlinePass.visibleEdgeColor.set("#ffffff");
-    outlinePass.hiddenEdgeColor.set("#190a05");
-    composer.addPass(outlinePass);
+    // Erosion pass
+    const erosionPass = new ErosionPass();
+    composer.addPass(erosionPass);
+
+    // Orbit controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
 
     // Update the animate function to use the composer
     const animate = () => {
@@ -53,6 +49,9 @@ const Home = () => {
       cube.rotation.x += 0.01;
       cube.rotation.y += 0.01;
       composer.render();
+
+      // Update the controls
+      controls.update();
     };
 
     animate();
