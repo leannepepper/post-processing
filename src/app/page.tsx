@@ -36,7 +36,12 @@ const Home = () => {
     composer.addPass(renderPass);
 
     // Erosion pass
-    const erosionPass = new ErosionPass();
+    const erosionPass = new ErosionPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      scene,
+      camera,
+      [cube]
+    );
     composer.addPass(erosionPass);
 
     // Orbit controls
